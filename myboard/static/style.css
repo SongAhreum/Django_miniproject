@@ -1,0 +1,21 @@
+a {
+  text-decoration: none;
+  color:black;
+}
+textarea.form-control:focus, input.form-control:focus {
+  border-color: gray!important;  
+}
+.page-item.active .page-link {
+  background-color: rgb(165, 210, 200); 
+  color: black;
+  font-weight: bold;
+  border: 1.5px solid black;  
+}
+.btn {
+  color:white!important;
+  background-color:grey;
+  padding: 3px;
+}
+.navbar-nav.ml-auto {
+    justify-content: flex-end;
+}

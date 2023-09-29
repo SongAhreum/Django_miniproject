@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% load myapp_filter %}
+{%load static%}
+{% block content %}
+<div class="container my-3">
+<!-- post -->
+    <!--post상단 수정&삭제 버튼-->
+    <div class="my-3">
+        <!-- message 표시(django.contrib import messages사용)
+        1.(수정버튼이 작성자 == 로그인일때만 보이지만): 비정상적인 방법으로 질문수정 시도 시 2.본인추천  시 -->
+        {% if messages %}
+        <div class="alert alert-danger my-3" role="alert">
+        {% for message in messages %}
+            <strong>{{ message.tags }}</strong>
+            <ul><li style="list-style:none">{{ message.message }}</li></ul>
+        {% endfor %}
+        </div>
+        {% endif %}
+        <!-- 게시글 수정&삭제 (작성자 == 로그인) -->
+        {% if request.user == post.author %}
+        <div style="float:right">
+        <a href="{% url 'myapp:post_modify' post.id  %}" 
+        class="btn btn-sm btn-outline-secondary" style="padding-left:10px">수정<img src="{% static 'icons/pen.png' %}" width="25px"></a>
+        <a href="javascript:void(0)" class="delete btn btn-sm btn-outline-secondary"
+        data-uri="{% url 'myapp:post_delete' post.id  %}"style="padding-left:10px">삭제<img src="{% static 'icons/delete.png' %}" width="25px"></a>  
+            <!-- javascript:void(0)해당링크를 눌러도 링크 동작안함 -->   
+        </div>
+        {% endif %}
+    </div>
+
+    <!--게시글제목-->
+    <h2 class="border-bottom py-2">{{ post.title }}</h2>
+    <!--게시글내용-->
+    <div class="card my-3">
+        <div class="card-body" style="height:500px; overflow: auto;position: relative;">           
+            <div class="card-text">{{ post.content|mark }}</div>
+            <div class="d-flex justify-content-end mb-3" style="position: absolute; bottom: 5px; right: 10px;">
+                <!--추천버튼-->
+                <a href="javascript:void(0)" data-uri="{% url 'myapp:post_vote' post.id  %}"
+                class="recommend"> <img src="{% static 'icons/like.png' %}" width="25px">
+                <span class="badge rounded-pill bg-danger">{{post.voter.count}}</span>
+            </a>
+                <!--post게시일자: 작성일자vs수정일자-->
+                <div class="badge bg-light text-dark p-2">
+                    {% if post.updated_at %}
+                    (수정){{ post.updated_at|date:"y.m.d P" }}
+                    {% else %}
+                    {{ post.created_at|date:"y.m.d P" }}
+                    {% endif %}
+                </div>
+            </div> 
+        </div>        
+    </div>
+    
+    <!-- comment -->
+    <!--댓글갯수-->
+    <h6 class="border-bottom my-3 py-2"><img src="{% static 'icons/comment.png' %}" width="20px">{{post.comment_set.count}}개의 댓글</h6>
+    {% for comment in post.comment_set.all %}
+    <!--작성&수정 시 해시프래그먼트포함해서 리다이렉트 -> 해당위치로이동 -->
+    <a id="comment_{{ comment.id }}"></a>
+    <!--댓글내용-->
+    <div class="card my-2">
+        <div class="card-body d-flex justify-content-between align-items-center pt-0 pb-1">
+            <div class="card-text" >{{ comment.content|mark}}</div>
+            <div>
+                <div class="badge bg-light text-dark p-1 text-start">
+                    <!--작성자-->
+                    <div class="mb-2">{{ post.author.username }}</div>
+                    <!--comment게시일자: 작성일자vs수정일자-->
+                    <div>
+                        {% if comment.updated_at %}
+                        (수정){{ comment.updated_at|date:"y.m.d P" }}
+                        {% else %}
+                        {{ comment.created_at|date:"y.m.d P" }}
+                        {% endif %}
+                    </div>
+                </div>
+                <!--작성자 == 사용자 : 수정&삭제&추천-->
+                <div>
+                    <a href="javascript:void(0)" data-uri="{% url 'myapp:comment_vote' comment.id  %}"
+                    class="recommend "> <img src="{% static 'icons/like2.png' %}" width="25px">
+                    <span class="badge rounded-pill bg-secondary">{{comment.voter.count}}</span>
+                    </a>
+                    {% if request.user == comment.author %}
+                    <a href="{% url 'myapp:comment_modify' comment.id  %}" 
+                    class="btn btn-sm btn-outline-secondary"><img src="{% static 'icons/pen.png' %}" width="25px"></a>
+                    <a href="#" class="delete btn btn-sm btn-outline-secondary "
+                    data-uri="{% url 'myapp:comment_delete' comment.id  %}"><img src="{% static 'icons/delete.png' %}" width="25px"></a>
+                    {% endif %}
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    <!-- 댓글 작성 -->
+    <form action="{% url 'myapp:comment_create' post.id %}" method="post" class="my-3">
+        {% csrf_token %}
+        <!-- 오류표시 Start -->
+        {% include "form_errors.html" %}
+        <!-- 오류표시 End -->
+        <div class="mb-3">
+            <label for="content" class="form-label">댓글내용</label>
+            <!--로그인하지 않았을시 disabled-->
+            <textarea {% if not user.is_authenticated %}disabled{% endif %} name="content" id="content" class="form-control" rows="1"></textarea>
+        </div>
+        <input type="submit" value="댓글등록" class="btn btn-dark">
+    </form>
+</div>
+{% endblock %}
+
+<!--삭제&추천 확인 박스 event-->
+{% block script %}
+<script type='text/javascript'>
+    const delete_elements = document.getElementsByClassName("delete"); //class = 'delete'인 모든요소 가져오기
+    Array.from(delete_elements).forEach(function(element) { // delete_elements의 array에서 forEach로 각각의 element에 동일한 eventListener할당
+        element.addEventListener('click', function() {
+            if(confirm("삭제하시겠습니까?")) {  //팝업된상자에서 선택에 따라 true,false
+                location.href = this.dataset.uri; //요소의 dataset.uri 속성에 저장된 URL로 이동 (delete관련 view이동(또는 api 엔드포인트))
+            };
+        });
+    });
+    const recommend_elements = document.getElementsByClassName("recommend");
+    Array.from(recommend_elements).forEach(function(element) {
+        element.addEventListener('click', function() {
+            if(confirm("추천하시겠습니까?")) {
+                location.href = this.dataset.uri;
+            };
+        });
+    });
+    </script>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{%load static%}
+{% load myapp_filter %}
+{% block content %}
+<div class="container my-3">
+    <!--글작성버튼-->
+    <div>
+    <a href="{% url 'myapp:post_create' %}" class="btn btn-dark mb-3 mt-3 float-end"><img src="{% static 'icons/pen.png' %}" width="25px">&nbsp;작성</a>
+    
+    </div>
+    <!--게시글 리스트-->
+    <table class="table">
+        <thead>
+        <tr class="table-success text-center" style="border-top: 2px solid #000;">
+            <th>번호</th>
+            <th style="width:50%" >제목</th>
+            <th>글쓴이</th>
+            <th>작성일시</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% if post_list %}
+        {% for post in post_list %}
+        <tr class="text-center">
+            <!--게시글 넘버링:paginator를 사용해서 어려웠음 -->
+            <!--|add-3처럼 필터는 인수로 숫자만되서 |sub필터를 직접만들어줌(sub:post_list.start_index 이렇게 적용하고싶어서)-->
+            <!--myapp/templatetags/myapp_filter.py : templatetags폴더에서 사용자 정의 태그와 필터를 제공 규칙임-->
+            <td>{{ post_list.paginator.count|sub:post_list.start_index|sub:forloop.counter0|add:1 }}</td>
+            <td class="text-start">
+                <a href="{% url 'myapp:detail' post.id %}">{{ post.title }}</a>
+                <!--댓글갯수 표시-->
+                {% if post.comment_set.count > 0 %}             
+                <span class="text-danger small mx-2"><img src="{% static 'icons/comment.png' %}" width="15px">{{ post.comment_set.count }}</span>
+                {% endif %}
+            </td>
+            <td>{{ post.author.username }}</td>    
+            <!--게시글생성 vs 수정 일자표시-->
+            {% if post.updated_at %}
+            <td style="font-size:0.8em">{{ post.updated_at|date:"y.m.d P" }}(수정)</td>
+            {% else %}
+            <td>{{ post.created_at|date:"y.m.d P" }}</td>
+            {% endif %}                  
+        </tr>
+        {% endfor %}
+        {% else %}
+        <tr>
+            <td colspan="4">게시글이 없습니다.</td>
+        </tr>
+        {% endif %}
+        </tbody>
+    </table>
+    <!-- 페이징처리 시작 : 처음,마지막버튼도 구현하기!!!!!!!!! -->
+    <ul class="pagination justify-content-center">
+        <!-- 이전페이지 -->
+        {% if post_list.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ post_list.previous_page_number }}">&laquo;</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <a class="page-link" tabindex="-1" aria-disabled="true" href="#">&laquo;</a>
+        </li>
+        {% endif %}
+        <!-- 페이지리스트 -->
+        {% for page_number in post_list.paginator.page_range %}
+        {% if page_number >= post_list.number|add:-5 and page_number <= post_list.number|add:5 %}
+        {% if page_number == post_list.number %}
+        <li class="page-item active" aria-current="page">
+            <a class="page-link" href="?page={{ page_number }}">{{ page_number }}</a>
+        </li>
+        {% else %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_number }}">{{ page_number }}</a>
+        </li>
+        {% endif %}
+        {% endif %}
+        {% endfor %}
+        <!-- 다음페이지 -->
+        {% if post_list.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ post_list.next_page_number }}">&raquo;</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <a class="page-link" tabindex="-1" aria-disabled="true" href="#">&raquo;</a>
+        </li>
+        {% endif %}
+    </ul>
+    <!-- 페이징처리 끝 -->
+    
+</div>
+{% endblock %}

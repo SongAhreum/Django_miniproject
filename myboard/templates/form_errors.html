@@ -1,0 +1,23 @@
+{% if form.errors %}
+<div class="alert alert-danger py-1">
+  {% for field in form %}
+  <!-- 필드 오류 -->
+  {% if field.errors %}
+    <div>
+        <strong>{{ field.label }}</strong>
+        {% for error in field.errors %}
+        <ul>
+            <li style="list-style:none"> {{error}}</li>
+        </ul>
+        {% endfor %}
+    </div>
+  {% endif %}
+  {% endfor %}
+  <!-- 넌필드 오류: form수준에서 발생,중복 제출,clean_<fieldname>에서 유효성을충족시키지못할시 form.non_field_errors에 저장  -->
+  {% for error in form.non_field_errors %}
+  <div>
+      <strong>{{ error }}</strong>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}

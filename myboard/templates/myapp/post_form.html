@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <h5 class="my-3 border-bottom pb-2">게시글 등록</h5>
+    <form method="post">
+        {% csrf_token %}
+        {% include "form_errors.html" %}
+        <!--오류를 form에 담은채로 다시 해당페이지를 랜더링 했을때 오류가없던 input에는 작성했던내용을 담은채로 보이도록 value설정-->
+        <div class="mb-3">
+            <label for="title" class="form-label">제목</label>
+            <input type="text" class="form-control" name="title" id="title"
+                  value="{{ form.title.value|default_if_none:'' }}">
+        </div>
+        <div class="mb-3">
+            <label for="content" class="form-label">내용</label>
+            <textarea class="form-control" name="content"
+                      id="content" rows="10">{{ form.content.value|default_if_none:'' }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-dark">저장하기</button>
+    </form>
+</div>
+{% endblock %}
+<!--
+  form 태그에 action 속성을 지정하지 않으면 현재 페이지의 URL이 디폴트 action으로 설정 
+<form method="post" action="{% url 'myapp:post_create' %}">
+  -->
